@@ -56,7 +56,7 @@ class Extrator:
         # messages = [{"role": "system", "content" : "You are a helpful assistant"}] + messages 
         # print("messages=", messages)
         res = call_api(messages, self._base_url, self._model_name)
-        # print(res)
+        print(res)
         if schema:
             json_res = extract_json(res)
             if "currency" not in json_res:
@@ -91,7 +91,7 @@ class Extrator:
         2. Normalization
         * Normalize numbers by removing “$”, commas, and parentheses.
         * Interpret “(5)” as –5.
-        * Convert units (e.g. "in millions" to "millions") appropriately if mentioned.
+        * Convert scale (e.g. "in millions" to "millions") appropriately if mentioned.
         * Maintain consistent period labels.(See Rule for Disambiguation in 10-Q Tables)
 
         3. Output Format
@@ -102,7 +102,7 @@ class Extrator:
         {
             "period": "2025 Q1",
             "currency": "USD",
-            "unit": "thousands",
+            "scale": "thousands",
             "product_segments":
                 {
                 "Mobile" : 1020,
@@ -122,7 +122,7 @@ class Extrator:
         * Do not caculate. Output number must be from input.
         * You Must follow the output format.
         * All information should comes from the following input.
-        * Pay attention on `unit`, especially not include percentage-based data.
+        * Pay attention on `scale`, especially not include percentage-based data.
 
         Now analyze the following input.
         """
@@ -166,5 +166,67 @@ class Extrator:
         user input:
         """)
     
+    @staticmethod
+    def checksum():
+        return dedent("""
+        You are a financial consistency checker.
+        Your task is to determine whether a JSON object describing product segment revenues is internally consistent with the reported total revenue.
+
+        ---
+
+        ## Input format
+        {
+        "period": "...",
+        "currency": "...",
+        "scale": "...",
+        "product_segments": { "<segment_name>": <value>, ... },
+        "total_revenue": <number>
+        }
+
+        ---
+
+        ## Instructions (follow strictly)
+
+        1. **Read all numeric values.**
+        Treat every key in "product_segments" as a segment name and its number as a revenue value.
+
+        2. **Detect aggregates.**
+        For each segment `X`:
+        - Check if two or more *other* segment values sum approximately (±1%) to `X`.
+        - If so, mark `X` as `"aggregate"`.
+        - Otherwise, mark it as `"leaf"`.
+
+        Example pattern (don’t memorize names):
+        - If “A revenue” + “B revenue” ≈ “C revenue”, then C is aggregate.
+
+        3. **Validate total_revenue.**
+        - Sum all `"leaf"` segments.
+        - If their sum ≈ total_revenue (within ±1%), data is valid.
+        - Otherwise, check if any subset of segments approximately equals total_revenue.
+
+        4. **Output format**
+        Respond **only** with a JSON object:
+
+        ```json
+        {
+        "is_valid": true or false,
+        "aggregate_segments": ["..."],
+        "leaf_segments": ["..."],
+        "sum_leaf": <number>,
+        "total_revenue": <number>,
+        "difference": <number>,
+        "reasoning": "<short numeric reasoning, e.g., which sums matched>"
+        }
+
+        **Rules to remember**
+
+        * Use approximate numeric comparison (±1% tolerance).
+        * Prefer smallest consistent set of leaf segments.
+        * Don’t include text outside JSON.
+
+        Input:
+
+        """)
+
     # "Ensure that all segments listed in the document are included in the answer."
 
