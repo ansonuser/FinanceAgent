@@ -7,7 +7,7 @@ from typing import List, Dict
 from bs4 import BeautifulSoup, Tag, Comment
 from heapq import *
 import hashlib
-
+import os
 COUNT = 0
 cursor = [0]
 
@@ -236,21 +236,23 @@ def extract_table_with_text_context(soup: BeautifulSoup | Tag,
                 after_table = True
                 continue
 
-            if len(txt.split()) <= 50 and re.search(r"in\s+(millions|billions|thousands|percentages)", txt, re.I):
+            if len(txt.split()) <= 50 and re.search(r"in\s+(million|billion|thousand|percentage)s?", txt, re.I):
                 parts.append(f"{txt}")
             continue
 
         # ---------- POST-CONTEXT (Footnotes) ----------
         if after_table and node.name != "table":
             # Common footnote patterns
-            if re.search(r"in\s+(millions|billions|thousands|percentages)", txt, re.I) and len(txt.split()) <= 50:
+            if re.search(r"in\s+(million|billion|thousand|percentage)s?", txt, re.I) and len(txt.split()) <= 50:
                 footnotes.append(f"{txt}")
 
             if max_footnotes == 0:
                 break
             max_footnotes -= 1
-
-    assert found_table
+    if not found_table:
+        print("Empty table found")
+        return ""
+        # assert found_table
     
     # Assemble: pre + table + footnotes
     pre, pos = [], []
@@ -328,39 +330,70 @@ def flatten_only_tables(sec: List[Dict[str, str]], seen_tables: set)->List[dict[
     return chunks
 
 
-def main(path : str, company_name : str, is_export : bool = True) -> List[dict[str, str]]:
+def run_single(path : str, is_export : bool = True, dest : str = "preprocessed") -> List[dict[str, str]]:
+    splits = path.split(os.sep)
+    company_name = splits[1]
+    date_str = splits[2]
+    filename = splits[3]
+    full_path = os.path.join(dest, company_name, date_str, filename.replace("htm", "json"))
+    if os.path.exists(full_path):
+        print(f"{full_path} existed!")
+        return []
     chunks = load_and_split_sec_html(path)
 
     print(f"Extracted {len(chunks)} sections.\n")
     for c in chunks:
         print("🔹", c["anchor"])
-      
+    
+
     if is_export:
-        with open(f"chunked_test_{company_name}.json", "w") as f:
+        if not os.path.exists(os.path.join(dest, company_name, date_str)):
+            os.makedirs(os.path.join(dest, company_name, date_str))
+        
+        with open(full_path, "w") as f:
             json.dump(chunks, f)
-        print(f"Saving chunked_test_{company_name}.json to the disk.")
+        print(rf"Saving {full_path} to the disk.")
     return chunks
+
+def main(path: str, is_export: bool = True):
+
+    for parent,_,files in os.walk(path):
+        for file in files:
+            if file.endswith("htm"):
+                # print(f"Processing on {file}")
+                file_path = os.path.join(parent, file)
+                run_single(file_path, is_export)
+
+
+
 
 
 if __name__ == "__main__":
     import sys
-    # assert len(sys.argv) == 3
+    single_mode = False
+    company_name = None
     argv = sys.argv
     # argv = [0, r'.\data\appl-d66145d10q.htm', r'aapl']
-    path = argv[1]
-    company_name = argv[2]
-    p = path
-    # r"D:\Side_projects\llm_cache_test\amzn-20240930.htm"
-    chunks = main(path, company_name, is_export=True)
-    raw = ""
-    for d in chunks:
-        raw += d["text"]
-    matches = re.finditer(r"<table.*?>.*?</table>", raw, re.DOTALL | re.IGNORECASE)
-    size = []
-    count = 1
-  
-    for m in matches:
-        if m.end() - m.start() > 150:
-            print(f"*******[ID={count}]*********")
-            print(raw[m.start() : m.end()])
-            count += 1
+    path = argv[1] # src folder
+    if len(argv) == 3:
+        company_name = argv[2]
+
+    if single_mode:
+        assert company_name is not None
+        p = path
+        # r"D:\Side_projects\llm_cache_test\amzn-20240930.htm"
+        chunks = run_single(path, company_name, is_export=True)
+        raw = ""
+        for d in chunks:
+            raw += d["text"]
+        matches = re.finditer(r"<table.*?>.*?</table>", raw, re.DOTALL | re.IGNORECASE)
+        size = []
+        count = 1
+    
+        for m in matches:
+            if m.end() - m.start() > 150:
+                print(f"*******[ID={count}]*********")
+                print(raw[m.start() : m.end()])
+                count += 1
+    else:
+        main(path)

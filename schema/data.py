@@ -5,8 +5,13 @@ from typing import Dict
 class RevenueData:
     period: str
     currency: str
-    unit: str
-    product_segments: Dict[str, int]
+    scale: str
+    product_segments: Dict[str, float]
     total_revenue: int
     reasoning: str
 
+@dataclass
+class CompanyIndexEntry:
+    cik: str
+    ticker: str
+    name: str
