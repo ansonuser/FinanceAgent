@@ -428,7 +428,6 @@ async def main():
             await asyncio.sleep(throttle_delay)
 
     mapping_table = build_mapping_table("result")
-    error_table = {'TSLA':['tsla-10q_20190331_prediction.json']}
     for company, files in error_table.items():
         print(f"Fix error in {company}") 
         for file in files:
