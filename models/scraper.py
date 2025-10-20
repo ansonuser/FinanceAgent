@@ -225,9 +225,6 @@ async def predict(file_path: str, output_dir: str, is_k: bool = False, session =
     tasks = []
     print(f"Number of chunks is: {len(chunks)}")
     for i, chunk in enumerate(chunks, 1):
-        #     continue
-        # print("i = ", i)
-        # print("chunk =", chunk)
         tasks.append(asyncio.create_task(process_chunk(i, chunk)))
         await asyncio.sleep(throttle_delay)
     await asyncio.gather(*tasks)

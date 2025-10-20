@@ -164,7 +164,7 @@ def main():
     company_index = load_company_tickers()[:NUM]
     print(company_index)
     for c_idx in tqdm.tqdm(company_index):
-        if c_idx.ticker != 'TSLA':
+        if c_idx.ticker == 'TSLA':
             continue
         cik = c_idx.cik
         stock_name = c_idx.ticker
@@ -196,8 +196,8 @@ def main():
                         print(f"Fail to download {stock_name}:{year}-{quarter:02d}")
 
 if __name__ == "__main__":
-    STARTY, ENDY = 2015, 2025
-    NUM = 10
+    STARTY, ENDY = 2025, 2026
+    NUM = 5
     TABLE = load_master()
 
     main()
