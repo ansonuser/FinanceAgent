@@ -441,6 +441,3 @@ class Extractor:
         """).strip()
 
     # "Ensure that all segments listed in the document are included in the answer."
-
-# D:\Side_projects\llm_cache_test\result\GOOGL\predictions
-# D:\Side_projects\llm_cache_test\preprocessed\GOOGL

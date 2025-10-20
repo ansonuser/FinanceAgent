@@ -6,12 +6,12 @@ from typing import Dict, Tuple
 import tqdm
 import tempfile
 from arelle import CntlrCmdLine
-# from arelle.plugin import pluginClassLoader
+
 
 PREFIX_URL = "https://www.sec.gov/Archives/"
 HEADERS = {"User-Agent": "MyApp contact@example.com"}
 TIME_TRACKS = []
-TICKER_PATH = "D:\\Side_projects\\stocks\\股票爬蟲\\codes\\us_stock\\configs\\company_tickers.json"
+TICKER_PATH = "\\configs\\company_tickers.json"
 
 def clean_inline_xbrl_html(body: str) -> str:
     """
