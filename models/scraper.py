@@ -5,7 +5,6 @@ from textwrap import dedent
 import math
 from security.post_scan import get_error_table
 import json
-import logging, argparse
 import sys
 from pathlib import Path
 from typing import Dict, Iterator, Optional, Tuple, List

@@ -26,14 +26,38 @@ Raw filings are downloaded, normalized into table-centric chunks, processed with
 - A working [Ollama](https://ollama.com/) install (default local inference target) or an HTTP-compatible chat completion endpoint.
 - Optional: [Arelle](https://arelle.org) for inline XBRL cleanup (used by `utils/fetch_data.py` and `utils/utils.py`).
 
-Install Python dependencies inside a virtual environment:
+Manage dependencies and virtual environments with Poetry (recommended).
 
-```powershell
-python -m venv .venv
-pip install aiohttp requests bs4 html5lib pandas tenacity rapidfuzz tqdm click python-dotenv json5 arelle
+Install Poetry (if you don't have it):
+
+```bash
+# macOS (Homebrew)
+brew install poetry
+# or the official installer
+curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-Create a `.env` file with any remote API secrets:
+Create a virtual environment and install dependencies using the existing `pyproject.toml`:
+
+```bash
+# From the project root (macOS / zsh)
+poetry install
+
+# Activate a shell with the project's virtualenv
+poetry shell
+
+# Or run a single command inside the venv without activating the shell
+poetry run python main.py
+```
+
+If you don't yet have a `pyproject.toml`, you can create one and add dependencies:
+
+```bash
+poetry init --no-interaction
+poetry add aiohttp requests beautifulsoup4 html5lib pandas tenacity rapidfuzz tqdm click python-dotenv json5 arelle
+```
+
+Create a `.env` file with any remote API secrets (used by the app when loaded):
 ```text
 api_token = YOUR_API_TOKEN
 ```
