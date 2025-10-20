@@ -4,7 +4,7 @@ This project automates revenue-by-segment extraction from SEC 10-Q and 10-K fili
 Raw filings are downloaded, normalized into table-centric chunks, processed with large language models, and validated before publishing JSON summaries per company and period.
 
 - **Async LLM extraction** – `models/scraper.py` streams chunks through configurable agents (Ollama locally, OpenRouter for meta fixes) and writes structured `RevenueData` JSON.
-- **Rich preprocessing** – `preprocessors/chunker.py` converts messy EDGAR HTML into clean, table-first JSON slices; `normalizer.py` deduplicates segment labels.
+- **Rich preprocessing** – `preprocessors/chunker.py` converts messy EDGAR HTML into clean, table-first JSON slices.
 - **Data quality gates** – `security/pre_scan.py` and `security/post_scan.py` catch missing filings, duplicate periods, and mismatched totals.
 - **Caching** – candidate chunks and prediction histories live under `result/<TICKER>/`, enabling manual review and iterative corrections.
 
