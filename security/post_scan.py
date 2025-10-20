@@ -53,7 +53,7 @@ def checksum(src : str, company : str, verbose = True)->List[str]:
         with open(file_path, "r", encoding='utf-8') as f:
             data = RevenueData(**json.load(f))
         try:
-            if (sum([v for v in data.product_segments.values() if v]) - data.total_revenue) / (data.total_revenue + 1e5) < 0.01:
+            if (sum([v for v in data.product_segments.values() if v]) - data.total_revenue) / (data.total_revenue + 1e-5) < 0.01:
                 continue
             else:
                 res.append((file_path))
