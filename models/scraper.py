@@ -427,7 +427,6 @@ async def main(ready:set, extractor: Extractor):
             await asyncio.sleep(THROTTLE_DELAY)
 
     mapping_table = build_mapping_table("result")
-
     for company, files in error_table.items():
         print(f"Fix error in {company}") 
         for file in files:
