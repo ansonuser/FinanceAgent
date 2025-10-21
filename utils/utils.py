@@ -11,7 +11,7 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-load_dotenv
+load_dotenv()
 TOKEN = os.getenv("api_token")
 
 def convert(src:str = "aapl-20240630.htm", dest:str = 'aapl-20240630.htm'):
@@ -49,11 +49,19 @@ async def a_call_api(
         headers = {"Content-Type": "application/json"}
         headers["Authorization"] = f"Bearer {TOKEN}"
 
+
     payload = {
         "model": model,
         "messages": messages,
         "stream": False,
         "options": {"temperature": 0.1},
+        "provider": {
+            "order" : [
+                "atlas-cloud/fp8",
+                "chutes/bf16",
+                "deepinfra/fp4"
+            ]
+        }
     }
 
     try:

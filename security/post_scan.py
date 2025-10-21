@@ -77,8 +77,8 @@ def get_error_table(companies : List[str], verbose : bool = False):
 
 
 if __name__ == "__main__":
-    companies = ["NVDA", "AAPL", "GOOGL", "AMZN", "MSFT"]
-    companies = ["TSLA"]
+    companies = ["NVDA", "AAPL", "GOOGL", "AMZN", "MSFT"] + ["TSLA"]
+    # companies = ["TSLA"]
     error_table = get_error_table(companies, True)
     
    

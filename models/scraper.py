@@ -20,7 +20,8 @@ from utils.utils import build_mapping_table
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME = "qwen2.5-coder:14b"
-
+MAX_CONCURRENT = 2
+THROTTLE_DELAY = 0.5
 OPENROUTER = "https://openrouter.ai/api/v1/chat/completions"
 
 DEFAULT_CHUNK_SIZE = 5000
@@ -128,7 +129,7 @@ def generator(
         }
 
 
-async def predict(file_path: str, output_dir: str, is_k: bool = False, session = None, meta = False):
+async def predict(file_path: str, output_dir: str, is_k: bool = False, session = None, meta = False, extractor = None):
     """Fully async version with bounded concurrency, throttle, and gather batching."""
     chunks_record = []
     quality_check = True
@@ -203,7 +204,7 @@ async def predict(file_path: str, output_dir: str, is_k: bool = False, session =
 
     # --- Concurrency control ---
     
-    throttle_delay = 0.2
+    
     sem = asyncio.Semaphore(MAX_CONCURRENT)
 
     async def process_chunk(i, chunk):
@@ -225,7 +226,7 @@ async def predict(file_path: str, output_dir: str, is_k: bool = False, session =
     print(f"Number of chunks is: {len(chunks)}")
     for i, chunk in enumerate(chunks, 1):
         tasks.append(asyncio.create_task(process_chunk(i, chunk)))
-        await asyncio.sleep(throttle_delay)
+        await asyncio.sleep(THROTTLE_DELAY)
     await asyncio.gather(*tasks)
     print(f"All {len(tasks)} chunks processed.")
 
@@ -323,7 +324,7 @@ async def clean_segment(extractor : Extractor, result : RevenueData) -> RevenueD
             del result.product_segments[seg]
   
 
-async def run_single_company(src: str, company: str, output_dir: str, session = None):
+async def run_single_company(src: str, company: str, output_dir: str, session = None, extractor = None):
     """
     Run predictions for all available filings of a single company (10-Q / 10-K).
     Processes each date subfolder asynchronously but sequentially throttled.
@@ -333,7 +334,6 @@ async def run_single_company(src: str, company: str, output_dir: str, session = 
     error_list = []
 
     
-    throttle_delay = 0.2     # small delay between runs to avoid rate bursts
     sem = asyncio.Semaphore(MAX_CONCURRENT)
 
     async def process_date_folder(date_folder: str):
@@ -347,7 +347,7 @@ async def run_single_company(src: str, company: str, output_dir: str, session = 
                     return
                 file_path = parent / files[0]
 
-                success = await predict(str(file_path), output_dir, is_k, session)
+                success = await predict(str(file_path), output_dir, is_k, session, extractor=extractor)
                 if success:
                     print(f"Done {file_path}")
                 else:
@@ -357,7 +357,7 @@ async def run_single_company(src: str, company: str, output_dir: str, session = 
             except Exception as e:
                 print(f"Exception in {date_folder}: {e}")
                 error_list.append(str(parent))
-            await asyncio.sleep(throttle_delay)
+            await asyncio.sleep(THROTTLE_DELAY)
 
     # Launch all date-folder tasks
     tasks = [asyncio.create_task(process_date_folder(d)) for d in date_folders]
@@ -367,23 +367,22 @@ async def run_single_company(src: str, company: str, output_dir: str, session = 
     return error_list
 
 
-async def run_prediction(src: str, output_dir: str):
+async def run_prediction(src: str, output_dir: str, ready: set, extractor = None):
     """
     Run async predictions for multiple companies concurrently.
     """
     error_files = defaultdict(list)
 
-    throttle_delay = 0.2          # delay between company task creation
     sem = asyncio.Semaphore(MAX_CONCURRENT)
     session = aiohttp.ClientSession()
     async def process_company(company: str, session = None):
         async with sem:
             try:
-                errs = await run_single_company(src, company, output_dir, session)
+                errs = await run_single_company(src, company, output_dir, session, extractor=extractor)
                 error_files[company].extend(errs)
             except Exception as e:
                 print(f"Error in {company}: {e}")
-            await asyncio.sleep(throttle_delay)
+            await asyncio.sleep(THROTTLE_DELAY)
 
     # Launch all company-level tasks
     tasks = [asyncio.create_task(process_company(c, session)) for c in ready]
@@ -398,14 +397,14 @@ async def run_prediction(src: str, output_dir: str):
 
 
 
-async def main():
+async def main(ready:set, extractor: Extractor):
     """
     Entry point for async batch run.
     """
     src = r"preprocessed"
     output_dir = r"result"
     os.makedirs(output_dir, exist_ok=True)
-    await run_prediction(src, output_dir)
+    await run_prediction(src, output_dir, ready, extractor=extractor)
     
     error_table = get_error_table(ready)
 
@@ -414,21 +413,21 @@ async def main():
     extractor.set_ollama(False)
     tasks = []
     
-    throttle_delay = 0.2
+
     session = aiohttp.ClientSession()
     async def run_pred(is_k : bool, file : str, output_dir : str, session = None):
         async with sem:
             try:
-                isfixed = await predict(file, output_dir, is_k, session = session, meta = True)
+                isfixed = await predict(file, output_dir, is_k, session = session, meta = True, extractor = extractor)
                 if isfixed:
                     print(f"Fixed chunks {file} from {company}")
              
             except Exception as e:
                 print(f"Error in {company}: got error message at fix stag---------------{e}")
-            await asyncio.sleep(throttle_delay)
+            await asyncio.sleep(THROTTLE_DELAY)
 
     mapping_table = build_mapping_table("result")
-    error_table = {'TSLA':['tsla-10q_20190331_prediction.json']}
+
     for company, files in error_table.items():
         print(f"Fix error in {company}") 
         for file in files:
@@ -444,11 +443,11 @@ async def main():
 
 if __name__ == "__main__":
     ready = {'AMZN', 'MSFT', "NVDA", "AAPL", "GOOGL"}
-    MAX_CONCURRENT = 3
+    
     extractor = Extractor()
     extractor.set_ollama(True)
     try:
-        asyncio.run(main())
+        asyncio.run(main(ready, extractor))
     except KeyboardInterrupt:
         print("\n🛑 Interrupted by user.")
 
