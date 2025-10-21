@@ -9,7 +9,7 @@ Raw filings are downloaded, normalized into table-centric chunks, processed with
 - **Caching** – candidate chunks and prediction histories live under `result/<TICKER>/`, enabling manual review and iterative corrections.
 
 ## Repository Layout
-
+- `example` - show how to extract revenue of product segment from ixbrl format
 - `preprocessors/` – HTML chunking, label normalization, and cleanup scripts.
 - `models/scraper.py` – main async extraction loop and quality refinement.
 - `screw/` – LLM agent wrappers, retry logic, and throttled API helpers.
@@ -82,6 +82,19 @@ api_token = YOUR_API_TOKEN
    python preprocessors/chunker.py data_new
    ```
    Outputs go to `preprocessed/<TICKER>/<PERIOD>/*.json`. These JSON files are the input for the extractor.
+
+
+   **Stat of chunking**
+   - Average tables per filing: 52.54
+   - Median token reduction ratio (after / before): 0.019
+
+   **Histogram**
+   Distribution of token before and after:
+   ![before after](./analysis_output/document_token_hist.png)
+
+   Distribution of tokens in tables
+   ![token distribution of table](./analysis_output/table_token_hist.png)
+
 
 4. **Pre-run sanity check (optional)**  
    ```powershell
