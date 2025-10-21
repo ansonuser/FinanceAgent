@@ -106,9 +106,15 @@ api_token = YOUR_API_TOKEN
    ```powershell
    python main.py
    ```
+   **Extraction Framework - IXBRL**
+   ![ixbrl framework](./images/ixbrl_framework.png)
+
    - Uses `MAX_CONCURRENT = 3` to throttle async calls.
    - `Extractor` defaults to Ollama (`http://localhost:11434/api/chat`) with `qwen2.5-coder:14b`.
    - Meta re-processing switches to OpenRouter (`openai/gpt-oss-20b:free`) when post-run fixes are required. Provide `api_token` in `.env`.
+   
+   **Extraction Framework - LLM**
+   ![ixbrl framework](./images/orchestration.png)
 
 6. **Post-run validation**  
    ```powershell
