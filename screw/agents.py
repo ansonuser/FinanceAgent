@@ -314,18 +314,18 @@ class Extractor:
             - Output the corrected answer only in JSON format.
                           
             Output Example:
-            {{
+            {
                     "period": "1994-06-30",
                     "currency": "USD",
                     "scale": "thousands",
                     "product_segments":
-                        {{
+                        {
                         "Mobile" : 1020,
                         "Service": 112
-                        }},
+                        },
                     "total_revenue" : 1132,
                     "reasoning": "<Describe how you validate the answer.>"
-            }}
+            }
         
             user input:
             """).strip()
@@ -362,18 +362,18 @@ class Extractor:
             - Output the corrected answer only in JSON format.
             
             ##Output Example:
-            {{
+            {
                     "period": "1994-06-30",
                     "currency": "USD",
                     "scale": "thousands",
                     "product_segments":
-                        {{
+                        {
                         "Mobile" : 1020,
                         "Service": 112
-                        }},
+                        },
                     "total_revenue" : 1132,
                     "reasoning": "<Describe how you validate the answer.>"
-            }}
+            }
         
             user input:
             """).strip()
